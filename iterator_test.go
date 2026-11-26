@@ -1,0 +1,209 @@
+package eclipse
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestIteratorNextEmpty(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{})
+
+	b, i, ok := it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorNext1(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b10000001})
+
+	b, i, ok := it.Next()
+	requireT.True(ok)
+	requireT.Zero(i)
+	requireT.EqualValues(0b10000001, b)
+
+	b, i, ok = it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorNext2(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b10000001, 0b11111111})
+
+	b, i, ok := it.Next()
+	requireT.True(ok)
+	requireT.Zero(i)
+	requireT.EqualValues(0b10000001, b)
+
+	b, i, ok = it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(1, i)
+	requireT.EqualValues(0b11111111, b)
+
+	b, i, ok = it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorNext3(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b00000001, 0b10000001, 0b11111111})
+
+	b, i, ok := it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(1, i)
+	requireT.EqualValues(0b10000001, b)
+
+	b, i, ok = it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(2, i)
+	requireT.EqualValues(0b11111111, b)
+
+	b, i, ok = it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorNext4(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b01111111, 0b10000001, 0b11111111})
+
+	b, i, ok := it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(127, i)
+	requireT.EqualValues(0b10000001, b)
+
+	b, i, ok = it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(128, i)
+	requireT.EqualValues(0b11111111, b)
+
+	b, i, ok = it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorNext5(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b01111111, 0b00000001, 0b10000001, 0b11111111})
+
+	b, i, ok := it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(128, i)
+	requireT.EqualValues(0b10000001, b)
+
+	b, i, ok = it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(129, i)
+	requireT.EqualValues(0b11111111, b)
+
+	b, i, ok = it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorNext6(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b01111111, 0b00000001, 0b10000001, 0b00000010, 0b11111111})
+
+	b, i, ok := it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(128, i)
+	requireT.EqualValues(0b10000001, b)
+
+	b, i, ok = it.Next()
+	requireT.True(ok)
+	requireT.EqualValues(131, i)
+	requireT.EqualValues(0b11111111, b)
+
+	b, i, ok = it.Next()
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorForwardEmpty(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{})
+
+	b, i, ok := it.Forward(5)
+	requireT.False(ok)
+	requireT.Zero(i)
+	requireT.Zero(b)
+}
+
+func TestIteratorForward1(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b10000001, 0b10000010})
+
+	b, i, ok := it.Forward(1)
+	requireT.True(ok)
+	requireT.EqualValues(1, i)
+	requireT.EqualValues(0b10000010, b)
+}
+
+func TestIteratorForward2(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b10000001, 0b10000010, 0b10000100})
+
+	it.Next()
+
+	b, i, ok := it.Forward(2)
+	requireT.True(ok)
+	requireT.EqualValues(2, i)
+	requireT.EqualValues(0b10000100, b)
+}
+
+func TestIteratorForward3(t *testing.T) {
+	t.Parallel()
+
+	requireT := require.New(t)
+
+	it := newIterator([]byte{0b00000001, 0b10000010, 0b00000001, 0b10000100})
+
+	it.Next()
+
+	b, i, ok := it.Forward(3)
+	requireT.True(ok)
+	requireT.EqualValues(3, i)
+	requireT.EqualValues(0b10000100, b)
+}
