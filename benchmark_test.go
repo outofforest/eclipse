@@ -9,7 +9,7 @@ import (
 
 const (
 	numOfRecords = 2000000
-	density      = 20
+	density      = 5
 )
 
 func BenchmarkReference(b *testing.B) {
@@ -58,7 +58,7 @@ func BenchmarkOR(b *testing.B) {
 func BenchmarkLabelEncoding(b *testing.B) {
 	indices := make([]bool, numOfRecords)
 	for i := range cap(indices) {
-		if rand.Intn(100) < 20 {
+		if rand.Intn(100) < density {
 			indices[i] = true
 		}
 	}
