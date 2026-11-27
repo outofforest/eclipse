@@ -71,15 +71,15 @@ func (b *bucketFilter[T, U]) Add(o T) {
 	b.index++
 }
 
-func (b *bucketFilter[T, U]) Match(o T) []byte {
+func (b *bucketFilter[T, U]) Match(o T) LabelSource {
 	minBucket, maxBucket, ok := b.buckets(o)
 	if !ok {
 		return nil
 	}
 
-	labels := b.encoders[minBucket].Labels()
+	labels := Direct(b.encoders[minBucket].Labels())
 	for i := minBucket + 1; i <= maxBucket; i++ {
-		labels = OR(labels, b.encoders[i].Labels())
+		labels = OR(labels, Direct(b.encoders[i].Labels()))
 	}
 	return labels
 }

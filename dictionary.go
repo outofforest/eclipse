@@ -7,7 +7,7 @@ var _ Filter[struct{}] = &dictionaryFilter[struct{}, int]{}
 
 type dictionaryFilter[T any, U comparable] struct {
 	dictFunc  ValueDictionaryFunc[T, U]
-	logicFunc func(f1, f2 []byte) []byte
+	logicFunc func(f1, f2 LabelSource) LabelSource
 	encoders  map[U]*encoder
 	index     uint64
 }
@@ -15,7 +15,7 @@ type dictionaryFilter[T any, U comparable] struct {
 // NewDictionaryFilter returns filter creating map for each item in dictionary.
 func NewDictionaryFilter[T any, U comparable](
 	dictFunc ValueDictionaryFunc[T, U],
-	logicFunc func(f1, f2 []byte) []byte,
+	logicFunc func(f1, f2 LabelSource) LabelSource,
 ) Filter[T] {
 	return &dictionaryFilter[T, U]{
 		dictFunc:  dictFunc,
@@ -37,24 +37,24 @@ func (d *dictionaryFilter[T, U]) Add(o T) {
 	d.index++
 }
 
-func (d *dictionaryFilter[T, U]) Match(o T) []byte {
+func (d *dictionaryFilter[T, U]) Match(o T) LabelSource {
 	values := d.dictFunc(o)
 	if len(values) == 0 {
 		if values == nil {
 			return nil
 		}
-		return []byte{}
+		return Direct([]uint64{})
 	}
-	var labels []byte
+	var labels LabelSource
 	for _, v := range values {
 		e := d.encoders[v]
 		if e == nil {
 			continue
 		}
 		if labels == nil {
-			labels = e.Labels()
+			labels = Direct(e.Labels())
 		} else {
-			labels = d.logicFunc(labels, e.Labels())
+			labels = d.logicFunc(labels, Direct(e.Labels()))
 		}
 	}
 

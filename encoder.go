@@ -7,23 +7,24 @@ import (
 )
 
 const (
-	numOfBits = 7
-	maxZeros  = math.MaxUint8 >> 1
+	maxZeros       uint64 = math.MaxUint64 >> 1
+	oneByteNumFlag uint64 = maxZeros + 1
+	numOfBits             = 63
 )
 
 type encoder struct {
-	labels    []byte
+	labels    []uint64
 	byteIndex uint64
 	bitIndex  uint64
 }
 
 func newEncoder() *encoder {
 	return &encoder{
-		labels: []byte{},
+		labels: []uint64{},
 	}
 }
 
-func (e *encoder) Labels() []byte {
+func (e *encoder) Labels() []uint64 {
 	return e.labels
 }
 
@@ -38,7 +39,7 @@ func (e *encoder) SetBit(index uint64) {
 		e.byteIndex += byteDiff
 		for byteDiff > 0 {
 			zeros := min(byteDiff, maxZeros)
-			e.labels = append(e.labels, uint8(zeros))
+			e.labels = append(e.labels, zeros)
 			byteDiff -= zeros
 		}
 	}
@@ -51,11 +52,11 @@ func (e *encoder) SetBit(index uint64) {
 	e.bitIndex = index + 1
 }
 
-func (e *encoder) SetByte(byteIndex uint64, b byte) {
+func (e *encoder) SetChunk(byteIndex uint64, v uint64) {
 	if numOfBits*byteIndex < e.bitIndex {
 		panic(errors.New("index is in the past"))
 	}
-	if b <= oneByteNumFlag {
+	if v <= oneByteNumFlag {
 		panic(errors.New("invalid byte"))
 	}
 
@@ -64,11 +65,11 @@ func (e *encoder) SetByte(byteIndex uint64, b byte) {
 		e.byteIndex += byteDiff
 		for byteDiff > 0 {
 			zeros := min(byteDiff, maxZeros)
-			e.labels = append(e.labels, uint8(zeros))
+			e.labels = append(e.labels, zeros)
 			byteDiff -= zeros
 		}
 	}
-	e.labels = append(e.labels, b)
+	e.labels = append(e.labels, v)
 	e.byteIndex++
 	e.bitIndex = numOfBits * (byteIndex + 1)
 }
