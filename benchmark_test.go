@@ -75,6 +75,90 @@ func BenchmarkOR(b *testing.B) {
 	b.StopTimer()
 }
 
+func BenchmarkCombined1(b *testing.B) {
+	l1 := createLabels()
+	l2 := createLabels()
+	l3 := createLabels()
+	l4 := createLabels()
+	l5 := createLabels()
+	l6 := createLabels()
+	l7 := createLabels()
+
+	var r []uint64
+
+	b.ResetTimer()
+	for range b.N {
+		r = AND(
+			AND(
+				OR(
+					OR(l1, l2),
+					l3,
+				),
+				OR(l4, l5),
+			),
+			OR(l6, l7),
+		)()
+	}
+	b.StopTimer()
+
+	_, _ = fmt.Fprint(io.Discard, r)
+}
+
+func BenchmarkCombined2(b *testing.B) {
+	l1 := createLabels()
+	l2 := createLabels()
+	l3 := createLabels()
+	l4 := createLabels()
+	l5 := createLabels()
+	l6 := createLabels()
+	l7 := createLabels()
+
+	var r []uint64
+
+	b.ResetTimer()
+	for range b.N {
+		l14 := AND(l1, l4)
+		l15 := AND(l1, l5)
+		l24 := AND(l2, l4)
+		l25 := AND(l2, l5)
+		l34 := AND(l3, l4)
+		l35 := AND(l3, l5)
+
+		l146 := AND(l14, l6)
+		l147 := AND(l14, l7)
+		l156 := AND(l15, l6)
+		l157 := AND(l15, l7)
+		l246 := AND(l24, l6)
+		l247 := AND(l24, l7)
+		l256 := AND(l25, l6)
+		l257 := AND(l25, l7)
+		l346 := AND(l34, l6)
+		l347 := AND(l34, l7)
+		l356 := AND(l35, l6)
+		l357 := AND(l35, l7)
+
+		r = OR(
+			OR(
+				OR(
+					OR(l146, l147),
+					OR(l156, l157),
+				),
+				OR(
+					OR(l246, l247),
+					OR(l256, l257),
+				),
+			),
+			OR(
+				OR(l346, l347),
+				OR(l356, l357),
+			),
+		)()
+	}
+	b.StopTimer()
+
+	_, _ = fmt.Fprint(io.Discard, r)
+}
+
 func BenchmarkLabelEncoding(b *testing.B) {
 	indices := make([]bool, numOfRecords)
 	for i := range cap(indices) {
@@ -95,12 +179,12 @@ func BenchmarkLabelEncoding(b *testing.B) {
 	b.StopTimer()
 }
 
-func createLabels() []byte {
+func createLabels() LabelSource {
 	e := newEncoder()
 	for i := range uint64(numOfRecords) {
 		if mathrand.Intn(100) < density {
 			e.SetBit(i)
 		}
 	}
-	return e.Labels()
+	return Direct(e.Labels())
 }

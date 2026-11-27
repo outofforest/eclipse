@@ -5,7 +5,7 @@ import "iter"
 // Filter provides bit filter for specific criterion.
 type Filter[T any] interface {
 	Add(o T)
-	Match(o T) []byte
+	Match(o T) LabelSource
 }
 
 // Matcher matches records against filters.
@@ -29,14 +29,11 @@ func (m *Matcher[T]) Add(o T) {
 
 // Match finds records matching provided criteria.
 func (m *Matcher[T]) Match(o T) iter.Seq[int] {
-	var labels []byte
+	var labels LabelSource
 	for _, f := range m.filters {
 		l := f.Match(o)
-		if len(l) == 0 {
-			if l == nil {
-				continue
-			}
-			return func(yield func(int) bool) {}
+		if l == nil {
+			continue
 		}
 		if labels == nil {
 			labels = l
@@ -48,7 +45,7 @@ func (m *Matcher[T]) Match(o T) iter.Seq[int] {
 		return nil
 	}
 
-	it := newIterator(labels)
+	it := newIterator(labels())
 	return func(yield func(int) bool) {
 		for {
 			l, i, ok := it.Next()
@@ -57,7 +54,7 @@ func (m *Matcher[T]) Match(o T) iter.Seq[int] {
 			}
 			bitIndex := int(i * numOfBits)
 			for j := range numOfBits {
-				mask := byte(1) << j
+				mask := uint64(1) << j
 				if mask > l {
 					break
 				}

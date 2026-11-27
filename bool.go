@@ -26,9 +26,9 @@ func (b *boolFilter[T]) Add(o T) {
 	b.index++
 }
 
-func (b *boolFilter[T]) Match(o T) []byte {
+func (b *boolFilter[T]) Match(o T) LabelSource {
 	if b.boolFunc(o) {
-		return b.encoder.Labels()
+		return Direct(b.encoder.Labels())
 	}
 	return nil
 }

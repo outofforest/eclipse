@@ -1,26 +1,24 @@
 package eclipse
 
-const oneByteNumFlag = 128
-
 type iterator struct {
-	labels    []byte
+	labels    []uint64
 	realIndex uint64
 }
 
-func newIterator(labels []byte) *iterator {
+func newIterator(labels []uint64) *iterator {
 	return &iterator{
 		labels: labels,
 	}
 }
 
-func (it *iterator) Next() (byte, uint64, bool) {
+func (it *iterator) Next() (uint64, uint64, bool) {
 	return it.Forward(0)
 }
 
-func (it *iterator) Forward(index uint64) (byte, uint64, bool) {
+func (it *iterator) Forward(index uint64) (uint64, uint64, bool) {
 	for i, l := range it.labels {
 		if l&oneByteNumFlag == 0 {
-			it.realIndex += uint64(l)
+			it.realIndex += l
 			continue
 		}
 

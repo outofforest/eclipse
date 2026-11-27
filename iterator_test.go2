@@ -11,7 +11,7 @@ func TestIteratorNextEmpty(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{})
+	it := newIterator([]uint64{})
 
 	b, i, ok := it.Next()
 	requireT.False(ok)
@@ -24,7 +24,7 @@ func TestIteratorNext1(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b10000001})
+	it := newIterator([]uint64{0b10000001})
 
 	b, i, ok := it.Next()
 	requireT.True(ok)
@@ -42,7 +42,7 @@ func TestIteratorNext2(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b10000001, 0b11111111})
+	it := newIterator([]uint64{0b10000001, 0b11111111})
 
 	b, i, ok := it.Next()
 	requireT.True(ok)
@@ -65,7 +65,7 @@ func TestIteratorNext3(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b00000001, 0b10000001, 0b11111111})
+	it := newIterator([]uint64{0b00000001, 0b10000001, 0b11111111})
 
 	b, i, ok := it.Next()
 	requireT.True(ok)
@@ -88,7 +88,7 @@ func TestIteratorNext4(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b01111111, 0b10000001, 0b11111111})
+	it := newIterator([]uint64{0b01111111, 0b10000001, 0b11111111})
 
 	b, i, ok := it.Next()
 	requireT.True(ok)
@@ -111,7 +111,7 @@ func TestIteratorNext5(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b01111111, 0b00000001, 0b10000001, 0b11111111})
+	it := newIterator([]uint64{0b01111111, 0b00000001, 0b10000001, 0b11111111})
 
 	b, i, ok := it.Next()
 	requireT.True(ok)
@@ -134,7 +134,7 @@ func TestIteratorNext6(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b01111111, 0b00000001, 0b10000001, 0b00000010, 0b11111111})
+	it := newIterator([]uint64{0b01111111, 0b00000001, 0b10000001, 0b00000010, 0b11111111})
 
 	b, i, ok := it.Next()
 	requireT.True(ok)
@@ -157,7 +157,7 @@ func TestIteratorForwardEmpty(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{})
+	it := newIterator([]uint64{})
 
 	b, i, ok := it.Forward(5)
 	requireT.False(ok)
@@ -170,7 +170,7 @@ func TestIteratorForward1(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b10000001, 0b10000010})
+	it := newIterator([]uint64{0b10000001, 0b10000010})
 
 	b, i, ok := it.Forward(1)
 	requireT.True(ok)
@@ -183,7 +183,7 @@ func TestIteratorForward2(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b10000001, 0b10000010, 0b10000100})
+	it := newIterator([]uint64{0b10000001, 0b10000010, 0b10000100})
 
 	it.Next()
 
@@ -198,7 +198,7 @@ func TestIteratorForward3(t *testing.T) {
 
 	requireT := require.New(t)
 
-	it := newIterator([]byte{0b00000001, 0b10000010, 0b00000001, 0b10000100})
+	it := newIterator([]uint64{0b00000001, 0b10000010, 0b00000001, 0b10000100})
 
 	it.Next()
 
