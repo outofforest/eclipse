@@ -1,5 +1,9 @@
 package eclipse
 
+import (
+	"math"
+)
+
 // LabelSource is a source of labels.
 type LabelSource func() []uint64
 
@@ -11,54 +15,67 @@ func Direct(labels []uint64) LabelSource {
 }
 
 // OR computes logical OR of labels.
-func OR(f1Source, f2Source LabelSource) LabelSource {
+func OR(fSources ...LabelSource) LabelSource {
 	var cache []uint64
 	return func() []uint64 {
 		if cache != nil {
 			return cache
 		}
 
-		f1 := f1Source()
-		if len(f1) == 0 {
-			cache = f2Source()
-			return cache
+		its := make([]*iterator, 0, len(fSources))
+		for _, fSource := range fSources {
+			f := fSource()
+			if len(f) > 0 {
+				cache = f
+				its = append(its, newIterator(f))
+			}
 		}
-
-		f2 := f2Source()
-		if len(f2) == 0 {
-			cache = f1
+		switch len(its) {
+		case 0:
+			cache = []uint64{}
+			return cache
+		case 1:
 			return cache
 		}
 
 		e := newEncoder()
-		f1It := newIterator(f1)
-		f2It := newIterator(f2)
 
-		f1L, f1I, f1Ok := f1It.Next()
-		f2L, f2I, f2Ok := f2It.Next()
-
-		for f1Ok || f2Ok {
-			switch {
-			case f1Ok && f2Ok:
-				switch {
-				case f1I == f2I:
-					e.SetChunk(f1I, f1L|f2L)
-					f1L, f1I, f1Ok = f1It.Next()
-					f2L, f2I, f2Ok = f2It.Next()
-				case f1I < f2I:
-					e.SetChunk(f1I, f1L)
-					f1L, f1I, f1Ok = f1It.Next()
-				default:
-					e.SetChunk(f2I, f2L)
-					f2L, f2I, f2Ok = f2It.Next()
+		incrementIts := make([]*iterator, 0, len(its))
+		for {
+			incrementIts = incrementIts[:0]
+			var ok bool
+			var minFI uint64 = math.MaxUint64
+			var l uint64
+			for i, it := range its {
+				if it == nil {
+					continue
 				}
-			// FIXME (wojciech): The following two cases might be optimized by simply copying the rest of labels.
-			case f1Ok:
-				e.SetChunk(f1I, f1L)
-				f1L, f1I, f1Ok = f1It.Next()
-			default:
-				e.SetChunk(f2I, f2L)
-				f2L, f2I, f2Ok = f2It.Next()
+
+				fL, fI, fOk := it.Next()
+				if !fOk {
+					its[i] = nil
+					continue
+				}
+
+				ok = true
+				switch {
+				case fI < minFI:
+					minFI = fI
+					l = fL
+					incrementIts = incrementIts[:0]
+					incrementIts = append(incrementIts, it)
+				case fI == minFI:
+					l |= fL
+					incrementIts = append(incrementIts, it)
+				}
+			}
+			if !ok {
+				break
+			}
+
+			e.SetChunk(minFI, l)
+			for _, it := range incrementIts {
+				it.Next()
 			}
 		}
 
